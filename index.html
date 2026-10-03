@@ -1061,6 +1061,7 @@
       // Update developer raw JSON
       sentenceRaw.textContent = JSON.stringify({
         original: currentSentenceData.original,
+        corrected: currentSentenceData.corrected,
         currentText: currentSentenceData.tokens.map(function(tok) { return tok.currentWord || tok.text; }).join(""),
         unresolvedCount: getUnresolvedCount(),
         tokens: currentSentenceData.tokens
@@ -1146,6 +1147,26 @@
       });
     }
 
+    // Reconstruct reliable corrected sentence based on current token states
+    function getCorrectedSentence() {
+      if (!currentSentenceData || !currentSentenceData.tokens) {
+        return sentenceInput.value || "";
+      }
+      return currentSentenceData.tokens.map(function(tok) {
+        if (!tok.isWord) {
+          return tok.text || "";
+        }
+        if (tok.resolved) {
+          return (tok.currentWord !== undefined) ? tok.currentWord : (tok.text || "");
+        }
+        // For unresolved typo: default to top-1 suggestion
+        if (tok.hasTypo && tok.details && tok.details.allSuggestions && tok.details.allSuggestions.length > 0) {
+          return tok.details.allSuggestions[0].word;
+        }
+        return tok.correctedWord || tok.text || tok.originalWord || "";
+      }).join("");
+    }
+
     // Apply Suggestion
     function applySuggestionToToken(tokenIdx, chosenWord, isRevert) {
       const t = currentSentenceData.tokens[tokenIdx];
@@ -1155,6 +1176,11 @@
       t.justAccepted = !isRevert;
       selectedTokenIndex = null;
       suggestionBox.style.display = "none";
+
+      // Always maintain reliable corrected sentence state
+      currentSentenceData.corrected = getCorrectedSentence();
+      copyButton.setAttribute("data-clipboard-text", currentSentenceData.corrected);
+      window.currentSentenceData = currentSentenceData;
 
       const updatedText = currentSentenceData.tokens.map(function(tok) { return tok.currentWord || tok.text; }).join("");
       sentenceInput.value = updatedText;
@@ -1176,8 +1202,10 @@
       const text = sentenceInput.value;
       if (!text || text.trim() === "") {
         currentSentenceData = null;
+        window.currentSentenceData = null;
         selectedTokenIndex = null;
         suggestionBox.style.display = "none";
+        copyButton.removeAttribute("data-clipboard-text");
         updateStatus(null);
         switchToEditMode();
         return;
@@ -1198,6 +1226,11 @@
       }
 
       currentSentenceData = result;
+      // Set reliable corrected-sentence value/state
+      currentSentenceData.corrected = getCorrectedSentence();
+      copyButton.setAttribute("data-clipboard-text", currentSentenceData.corrected);
+      window.currentSentenceData = currentSentenceData;
+
       selectedTokenIndex = null;
       suggestionBox.style.display = "none";
 
@@ -1211,33 +1244,60 @@
     document.getElementById("clearSentenceButton").onclick = function() {
       sentenceInput.value = "";
       currentSentenceData = null;
+      window.currentSentenceData = null;
       selectedTokenIndex = null;
       updateEmptyHint();
       suggestionBox.style.display = "none";
+      copyButton.removeAttribute("data-clipboard-text");
       sentenceRaw.textContent = "Sentence metadata will appear here when text is analyzed.";
       updateStatus(null);
       switchToEditMode();
     };
 
-    // Copy Action
+    // Copy Action Helper
+    function fallbackCopyText(text, callback) {
+      const tempArea = document.createElement("textarea");
+      tempArea.value = text;
+      tempArea.style.position = "fixed";
+      tempArea.style.top = "-9999px";
+      tempArea.style.left = "-9999px";
+      tempArea.setAttribute("readonly", "");
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand("copy");
+        if (callback) callback();
+      } catch (err) {
+        console.error("Fallback copy failed", err);
+      }
+      document.body.removeChild(tempArea);
+    }
+
+    // Copy Action: copies reliable corrected sentence, not original uncorrected input
     copyButton.onclick = function() {
-      const textToCopy = sentenceInput.value;
+      const textToCopy = (currentSentenceData && currentSentenceData.corrected)
+        ? currentSentenceData.corrected
+        : (currentSentenceData ? getCorrectedSentence() : sentenceInput.value);
       if (!textToCopy) return;
 
-      navigator.clipboard.writeText(textToCopy).then(function() {
+      function onCopiedSuccess() {
         copyBtnText.textContent = "✓ Copied";
         setTimeout(function() {
           copyBtnText.textContent = "Copy corrected text";
         }, 1500);
-      }).catch(function() {
-        sentenceInput.select();
-        document.execCommand("copy");
-        copyBtnText.textContent = "✓ Copied";
-        setTimeout(function() {
-          copyBtnText.textContent = "Copy corrected text";
-        }, 1500);
-      });
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(onCopiedSuccess).catch(function() {
+          fallbackCopyText(textToCopy, onCopiedSuccess);
+        });
+      } else {
+        fallbackCopyText(textToCopy, onCopiedSuccess);
+      }
     };
+
+    window.getCorrectedSentence = getCorrectedSentence;
+    window.checkCurrentSentence = checkCurrentSentence;
 
     // Sample Sentence Helpers
     function loadSentence(text) {
