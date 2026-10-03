@@ -944,30 +944,17 @@
       emptyHint.style.display = (text.length === 0) ? "block" : "none";
     }
 
-    // Input listeners: auto-check with gentle debounce
+    // Input listeners: update UI state without auto-triggering review while typing
     sentenceInput.addEventListener("input", function() {
       updateEmptyHint();
-      clearTimeout(autoCheckTimer);
       if (isReviewMode) {
         switchToEditMode();
       }
-      if (sentenceInput.value.trim().length > 0) {
-        autoCheckTimer = setTimeout(checkCurrentSentence, 750);
-      } else {
-        updateStatus(null);
-      }
-    });
-
-    // When focus leaves the writing area, cancel pending auto-check to prevent premature processing
-    sentenceInput.addEventListener("blur", function() {
-      clearTimeout(autoCheckTimer);
+      updateStatus(null);
     });
 
     sentenceInput.addEventListener("paste", function() {
-      setTimeout(function() {
-        updateEmptyHint();
-        checkCurrentSentence();
-      }, 50);
+      setTimeout(updateEmptyHint, 0);
     });
 
     sentenceInput.addEventListener("keydown", function(e) {
