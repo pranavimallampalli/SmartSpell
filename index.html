@@ -441,6 +441,212 @@
       color: var(--deep-blue);
     }
 
+    .status-subline {
+      font-weight: 400;
+      color: var(--dim-grey);
+      font-size: 13px;
+      margin-left: 4px;
+    }
+
+    /* ==========================================================================
+       DEDICATED CORRECTED TEXT COMPONENT (#correctedSection)
+       ========================================================================== */
+    .corrected-output-section {
+      padding: 22px 48px 24px;
+      border-top: 1px solid var(--border-subtle);
+      background: #FFFFFF;
+      animation: fadeInOutput 0.2s ease-out;
+    }
+
+    @keyframes fadeInOutput {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .corrected-output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .corrected-output-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim-grey);
+      user-select: none;
+    }
+
+    .corrected-sentence-text {
+      font-family: var(--font-stack);
+      font-size: 20px;
+      line-height: 1.8;
+      color: var(--deep-blue);
+      font-weight: 400;
+      letter-spacing: -0.012em;
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    /* ==========================================================================
+       CORRECTION PREVIEW COMPONENT (#correctionsPanel)
+       ========================================================================== */
+    .corrections-panel {
+      padding: 18px 48px 24px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-paper-tint);
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      animation: fadeInPanel 0.2s ease-out;
+    }
+
+    @keyframes fadeInPanel {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .corr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .corr-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dim-grey);
+    }
+
+    .corr-badge {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--old-rose);
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 1px 8px;
+    }
+
+    .corr-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .corr-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .corr-row:hover {
+      border-color: var(--rosy-taupe);
+      background: #FCFAF8;
+    }
+
+    .corr-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .corr-orig {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--dim-grey);
+      text-decoration: line-through;
+      text-decoration-color: var(--old-rose);
+    }
+
+    .corr-arrow {
+      color: var(--rosy-taupe);
+      font-size: 12px;
+    }
+
+    .corr-apply-btn {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 5px;
+      padding: 3px 9px;
+      font-family: var(--font-stack);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--deep-blue);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .corr-apply-btn:hover {
+      background: #FAF7F2;
+      border-color: var(--deep-blue);
+    }
+
+    .corr-apply-btn.is-applied {
+      background: #F2F7F4;
+      border-color: #B2D4C0;
+      color: #265B3B;
+      cursor: default;
+    }
+
+    .corr-check {
+      color: var(--old-rose);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .corr-apply-btn.is-applied .corr-check {
+      color: #265B3B;
+    }
+
+    .corr-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .corr-reason {
+      font-size: 11.5px;
+      color: var(--dim-grey);
+      font-style: italic;
+    }
+
+    .corr-tag-applied {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #265B3B;
+      background: #EAF3EE;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .corr-tag-original {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--dim-grey);
+      background: #F0ECE6;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
     /* Subtle sample prompt links at page footer */
     .sample-prompts {
       margin-top: 16px;
@@ -699,6 +905,10 @@
       .bottom-actions {
         justify-content: flex-start;
       }
+
+      .corrected-output-section {
+        padding: 18px 24px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -738,6 +948,33 @@
       .btn-copy, .btn-check-compact {
         flex: 1;
         text-align: center;
+      }
+
+      .corrected-output-section {
+        padding: 16px 16px;
+      }
+
+      .corrected-output-header {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .corrected-sentence-text {
+        font-size: 18px;
+      }
+
+      .corrections-panel {
+        padding: 14px 20px 18px;
+      }
+
+      .corr-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .corr-right {
+        align-self: flex-start;
       }
     }
   </style>
@@ -789,9 +1026,6 @@
         <div class="status-msg" id="statusText">Ready to check</div>
 
         <div class="bottom-actions">
-          <button id="copyButton" type="button" class="btn-copy">
-            <span id="copyBtnText">Copy corrected text</span>
-          </button>
           <button id="checkSentenceButton" type="button" class="btn-check-compact">
             <span>Check text</span>
           </button>
@@ -799,6 +1033,26 @@
             <span>Clear</span>
           </button>
         </div>
+      </div>
+
+      <!-- Dedicated Corrected Text Component (#correctedSection) -->
+      <div id="correctedSection" class="corrected-output-section" style="display: none;">
+        <div class="corrected-output-header">
+          <span class="corrected-output-label">CORRECTED TEXT</span>
+          <button id="copyButton" type="button" class="btn-copy">
+            <span id="copyBtnText">Copy corrected text</span>
+          </button>
+        </div>
+        <div id="correctedSentenceDisplay" class="corrected-sentence-text"></div>
+      </div>
+
+      <!-- Correction Preview Component (#correctionsPanel) -->
+      <div id="correctionsPanel" class="corrections-panel" style="display: none;">
+        <div class="corr-header">
+          <span class="corr-title">Corrections</span>
+          <span id="corrCount" class="corr-badge">0 found</span>
+        </div>
+        <div id="corrList" class="corr-list"></div>
       </div>
 
     </div>
@@ -937,6 +1191,11 @@
     const statusText = document.getElementById("statusText");
     const copyButton = document.getElementById("copyButton");
     const copyBtnText = document.getElementById("copyBtnText");
+    const correctedSection = document.getElementById("correctedSection");
+    const correctedSentenceDisplay = document.getElementById("correctedSentenceDisplay");
+    const correctionsPanel = document.getElementById("correctionsPanel");
+    const corrCount = document.getElementById("corrCount");
+    const corrList = document.getElementById("corrList");
 
     // Track empty hint
     function updateEmptyHint() {
@@ -950,6 +1209,8 @@
       if (isReviewMode) {
         switchToEditMode();
       }
+      correctedSection.style.display = "none";
+      correctionsPanel.style.display = "none";
       updateStatus(null);
     });
 
@@ -1012,7 +1273,7 @@
 
       if (unresolvedCount === 0 && unrecognizedCount === 0) {
         statusText.className = "status-msg is-clean";
-        statusText.innerHTML = "&check; All clear";
+        statusText.innerHTML = "&check; All clear <span class=\"status-subline\">— Your sentence looks good.</span>";
       } else if (unresolvedCount > 0 && unrecognizedCount === 0) {
         statusText.className = "status-msg";
         statusText.textContent = unresolvedCount + " " + (unresolvedCount === 1 ? "spelling mistake" : "spelling mistakes");
@@ -1041,6 +1302,94 @@
       }).length;
     }
 
+    // Render Dedicated Corrected Output Section
+    function renderCorrectedSection() {
+      if (!currentSentenceData || !currentSentenceData.corrected || currentSentenceData.corrected.trim().length === 0) {
+        correctedSection.style.display = "none";
+        return;
+      }
+      correctedSection.style.display = "block";
+      correctedSentenceDisplay.textContent = currentSentenceData.corrected;
+    }
+
+    // Render Compact Correction Preview Component
+    function renderCorrectionsPanel() {
+      if (!currentSentenceData || !currentSentenceData.tokens) {
+        correctionsPanel.style.display = "none";
+        return;
+      }
+
+      // Collect only tokens that are words and have genuine suggestions
+      const typoItems = [];
+      for (let i = 0; i < currentSentenceData.tokens.length; i++) {
+        const tok = currentSentenceData.tokens[i];
+        if (tok.isWord && tok.hasTypo && tok.details && tok.details.allSuggestions && tok.details.allSuggestions.length > 0) {
+          typoItems.push({ token: tok, index: i });
+        }
+      }
+
+      if (typoItems.length === 0) {
+        correctionsPanel.style.display = "none";
+        return;
+      }
+
+      correctionsPanel.style.display = "block";
+      corrCount.textContent = typoItems.length + (typoItems.length === 1 ? " found" : " found");
+
+      let html = "";
+      for (let j = 0; j < typoItems.length; j++) {
+        const item = typoItems[j];
+        const t = item.token;
+        const idx = item.index;
+        const original = t.originalWord;
+        const topCandidate = t.details.allSuggestions[0].word;
+        const explanation = getTracebackExplanation(t.details);
+        const isApplied = t.resolved && (t.currentWord === topCandidate);
+        const isReverted = t.resolved && (t.currentWord === t.originalWord);
+
+        html += '<div class="corr-row" data-idx="' + idx + '" title="Click to inspect this typo in the text">';
+        html += '  <div class="corr-left">';
+        html += '    <span class="corr-orig">' + escapeHtml(original) + '</span>';
+        html += '    <span class="corr-arrow">&rarr;</span>';
+        html += '    <button type="button" class="corr-apply-btn' + (isApplied ? ' is-applied' : '') + '" data-idx="' + idx + '" data-word="' + escapeHtml(topCandidate) + '" title="' + (isApplied ? 'Correction applied' : 'Click to apply this correction') + '">';
+        html += '      <span class="corr-word">' + escapeHtml(topCandidate) + '</span>';
+        html += '      <span class="corr-check">&check;</span>';
+        html += '    </button>';
+        html += '  </div>';
+        html += '  <div class="corr-right">';
+        html += '    <span class="corr-reason">' + escapeHtml(explanation) + '</span>';
+        if (isApplied) {
+          html += '    <span class="corr-tag-applied">Applied</span>';
+        } else if (isReverted) {
+          html += '    <span class="corr-tag-original">Original kept</span>';
+        }
+        html += '  </div>';
+        html += '</div>';
+      }
+
+      corrList.innerHTML = html;
+
+      // Bind events
+      const rows = corrList.querySelectorAll(".corr-row");
+      rows.forEach(function(row) {
+        const idx = parseInt(row.getAttribute("data-idx"), 10);
+        const applyBtn = row.querySelector(".corr-apply-btn");
+
+        if (applyBtn) {
+          applyBtn.onclick = function(e) {
+            e.stopPropagation();
+            const word = applyBtn.getAttribute("data-word");
+            applySuggestionToToken(idx, word, false);
+          };
+        }
+
+        row.onclick = function() {
+          const span = sentenceDisplay.querySelector('.corrected-word[data-idx="' + idx + '"]');
+          showSuggestionsForToken(idx, span);
+        };
+      });
+    }
+
     // Render Review Surface
     function renderSentenceDisplay() {
       if (!currentSentenceData || !currentSentenceData.tokens) return;
@@ -1066,6 +1415,8 @@
 
       sentenceDisplay.innerHTML = html;
       updateStatus(getUnresolvedCount(), getUnrecognizedCount());
+      renderCorrectedSection();
+      renderCorrectionsPanel();
 
       // Update developer raw JSON
       sentenceRaw.textContent = JSON.stringify({
@@ -1215,6 +1566,8 @@
         window.currentSentenceData = null;
         selectedTokenIndex = null;
         suggestionBox.style.display = "none";
+        correctedSection.style.display = "none";
+        correctionsPanel.style.display = "none";
         copyButton.removeAttribute("data-clipboard-text");
         updateStatus(null);
         switchToEditMode();
@@ -1258,6 +1611,8 @@
       selectedTokenIndex = null;
       updateEmptyHint();
       suggestionBox.style.display = "none";
+      correctedSection.style.display = "none";
+      correctionsPanel.style.display = "none";
       copyButton.removeAttribute("data-clipboard-text");
       sentenceRaw.textContent = "Sentence metadata will appear here when text is analyzed.";
       updateStatus(null);
