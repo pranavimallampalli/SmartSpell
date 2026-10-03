@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartSpell — Focused Writing Tool</title>
+  
+  <!-- Modern Editorial & System Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       EXACT COLOR PALETTE
+       - Deep Space Blue: #253D5B (Primary text, wordmark, primary controls)
+       - Dim Grey:        #67697C (Secondary text, supporting info, hints)
+       - Rosy Taupe:      #B79D94 (Warm highlight, best suggestion, selected)
+       - Old Rose:        #C6878F (Typo wavy underline, correction/success accent)
+       - Neutral Grey:    #969696 (Borders with low opacity, muted UI)
+       - Background:      #FAF8F5 (Warm page background)
+       - Writing paper:   #FFFFFF (Pristine paper surface)
+       - Soft paper tint: #F7F3EF (Subtle tint for highlights / active states)
+       ========================================================================== */
+    :root {
+      --deep-blue: #253D5B;
+      --dim-grey: #67697C;
+      --rosy-taupe: #B79D94;
+      --old-rose: #C6878F;
+      --neutral-grey: #969696;
+      --bg-page: #FAF8F5;
+      --bg-paper: #FFFFFF;
+      --bg-paper-tint: #F7F3EF;
+
+      /* Structural Tokens */
+      --border-subtle: rgba(150, 150, 150, 0.22);
+      --border-focus: rgba(183, 157, 148, 0.6);
+      --shadow-paper: 0 2px 14px rgba(37, 61, 91, 0.035), 0 1px 3px rgba(37, 61, 91, 0.02);
+      --shadow-popover: 0 8px 24px -2px rgba(37, 61, 91, 0.1), 0 2px 6px rgba(37, 61, 91, 0.04);
+      --shadow-slideover: -12px 0 32px rgba(37, 61, 91, 0.12);
+
+      /* Typography */
+      --font-stack: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      background-color: var(--bg-page);
+      color: var(--deep-blue);
+      font-family: var(--font-stack);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 0 20px 48px;
+    }
+
+    /* ==========================================================================
+       TOP APPLICATION BAR (Centered ~1060px, Quiet & Elegant)
+       ========================================================================== */
+    .app-top {
+      width: 100%;
+      max-width: 1060px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 36px 0 20px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--deep-blue);
+      text-transform: uppercase;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--old-rose);
+    }
+
+    .brand-subline {
+      font-size: 13px;
+      color: var(--dim-grey);
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    .how-link {
+      background: none;
+      border: none;
+      font-family: var(--font-stack);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--dim-grey);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: color 0.15s ease, background 0.15s ease;
+      text-decoration: none;
+    }
+
+    .how-link:hover {
+      color: var(--deep-blue);
+      background-color: var(--bg-paper-tint);
+    }
+
+    /* ==========================================================================
+       THE WRITING SHEET (The Centerpiece of SmartSpell)
+       ========================================================================== */
+    .sheet-wrapper {
+      width: 100%;
+      max-width: 1060px;
+      margin-top: 4px;
+    }
+
+    .writing-paper {
+      background-color: var(--bg-paper);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      box-shadow: var(--shadow-paper);
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .writing-paper:focus-within {
+      border-color: var(--border-focus);
+    }
+
+    .paper-canvas {
+      position: relative;
+      padding: 40px 48px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Native Textarea (#sentenceInput) */
+    textarea#sentenceInput {
+      width: 100%;
+      min-height: 300px;
+      border: none;
+      outline: none;
+      resize: vertical;
+      background: transparent;
+      font-family: var(--font-stack);
+      font-size: 20px;
+      line-height: 1.85;
+      color: var(--deep-blue);
+      letter-spacing: -0.012em;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    textarea#sentenceInput::placeholder {
+      color: var(--rosy-taupe);
+      font-weight: 400;
+      opacity: 0.75;
+    }
+
+    /* Empty state secondary hint */
+    .empty-prompt-hint {
+      position: absolute;
+      top: 80px;
+      left: 48px;
+      font-size: 13.5px;
+      color: var(--neutral-grey);
+      pointer-events: none;
+      user-select: none;
+      transition: opacity 0.15s ease;
+    }
+
+    /* Interactive Corrected Surface (#sentenceDisplay) */
+    #sentenceDisplay {
+      width: 100%;
+      min-height: 300px;
+      font-family: var(--font-stack);
+      font-size: 20px;
+      line-height: 1.85;
+      color: var(--deep-blue);
+      letter-spacing: -0.012em;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      user-select: text;
+    }
+
+    /* Refined Wavy Underline (Old Rose #C6878F) */
+    .corrected-word {
+      text-decoration: underline wavy var(--old-rose);
+      text-underline-offset: 6px;
+      text-decoration-thickness: 1.5px;
+      cursor: pointer;
+      position: relative;
+      transition: opacity 0.15s ease;
+    }
+
+    .corrected-word:hover {
+      opacity: 0.85;
+    }
+
+    .corrected-word.selected {
+      background-color: var(--bg-paper-tint);
+      border-radius: 3px;
+    }
+
+    /* Brief micro-feedback on word correction */
+    .word-resolved-flash {
+      animation: wordAccepted 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes wordAccepted {
+      0% {
+        color: var(--old-rose);
+      }
+      100% {
+        color: var(--deep-blue);
+      }
+    }
+
+    /* ==========================================================================
+       CONTEXTUAL CORRECTION POPOVER (#suggestionBox)
+       ========================================================================== */
+    #suggestionBox {
+      position: absolute;
+      background-color: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 9px;
+      box-shadow: var(--shadow-popover);
+      padding: 8px;
+      width: 220px;
+      z-index: 50;
+      animation: popoverFade 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    @keyframes popoverFade {
+      from {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .pop-typo-header {
+      font-size: 12px;
+      color: var(--dim-grey);
+      font-weight: 500;
+      padding: 4px 8px 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 4px;
+    }
+
+    .pop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chip {
+      appearance: none;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--font-stack);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--deep-blue);
+      padding: 6px 8px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.12s ease;
+      width: 100%;
+    }
+
+    .chip:hover {
+      background-color: var(--bg-paper-tint);
+    }
+
+    /* Best suggestion visually emphasized */
+    .chip.chip-best {
+      background-color: var(--bg-paper-tint);
+      font-weight: 600;
+      color: var(--deep-blue);
+    }
+
+    .chip-best:hover {
+      background-color: #f0eae3;
+    }
+
+    .chip-check {
+      color: var(--old-rose);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .pop-explanation {
+      font-size: 11.5px;
+      color: var(--dim-grey);
+      padding: 6px 8px 4px;
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .chip-revert {
+      appearance: none;
+      background: none;
+      border: none;
+      color: var(--dim-grey);
+      font-family: var(--font-stack);
+      font-size: 11.5px;
+      cursor: pointer;
+      padding: 4px 8px;
+      width: 100%;
+      text-align: left;
+      transition: color 0.12s ease;
+    }
+
+    .chip-revert:hover {
+      color: var(--deep-blue);
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       BOTTOM STATUS AREA (Extremely Quiet)
+       ========================================================================== */
+    .paper-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px 24px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 13.5px;
+    }
+
+    .status-msg {
+      color: var(--dim-grey);
+      font-weight: 500;
+    }
+
+    .status-msg.is-clean {
+      color: var(--deep-blue);
+      font-weight: 600;
+    }
+
+    .bottom-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Minimal Copy Button */
+    .btn-copy {
+      appearance: none;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-family: var(--font-stack);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--deep-blue);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy:hover {
+      background-color: var(--bg-paper-tint);
+      border-color: var(--rosy-taupe);
+    }
+
+    /* Secondary Compact Actions (Visually Quiet) */
+    .btn-check-compact {
+      appearance: none;
+      background: var(--deep-blue);
+      border: 1px solid var(--deep-blue);
+      border-radius: 6px;
+      font-family: var(--font-stack);
+      font-size: 13px;
+      font-weight: 500;
+      color: #FFFFFF;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn-check-compact:hover {
+      opacity: 0.9;
+    }
+
+    .btn-clear-compact {
+      appearance: none;
+      background: none;
+      border: none;
+      font-family: var(--font-stack);
+      font-size: 13px;
+      color: var(--neutral-grey);
+      cursor: pointer;
+      padding: 6px 4px;
+      transition: color 0.15s ease;
+    }
+
+    .btn-clear-compact:hover {
+      color: var(--deep-blue);
+    }
+
+    /* Subtle sample prompt links at page footer */
+    .sample-prompts {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--neutral-grey);
+      user-select: none;
+    }
+
+    .sample-btn {
+      background: none;
+      border: none;
+      font-family: var(--font-stack);
+      font-size: 12px;
+      color: var(--dim-grey);
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: var(--border-subtle);
+      text-underline-offset: 2px;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .sample-btn:hover {
+      color: var(--deep-blue);
+      text-decoration-color: var(--rosy-taupe);
+    }
+
+    /* ==========================================================================
+       HOW IT WORKS OVERLAY (DAA PIPELINE + DIAGNOSTICS)
+       ========================================================================== */
+    .overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(37, 61, 91, 0.4);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .overlay-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .slideover {
+      width: 100%;
+      max-width: 600px;
+      height: 100vh;
+      background-color: #FFFFFF;
+      box-shadow: var(--shadow-slideover);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .overlay-backdrop.active .slideover {
+      transform: translateX(0);
+    }
+
+    .slideover-header {
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .slideover-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--deep-blue);
+    }
+
+    .slideover-subtitle {
+      font-size: 12.5px;
+      color: var(--dim-grey);
+      margin-top: 2px;
+    }
+
+    .slideover-close {
+      appearance: none;
+      background: none;
+      border: none;
+      font-size: 22px;
+      line-height: 1;
+      color: var(--neutral-grey);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .slideover-close:hover {
+      color: var(--deep-blue);
+    }
+
+    .slideover-body {
+      padding: 24px 28px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Pipeline Diagram */
+    .pipeline-diagram {
+      background: var(--bg-page);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .p-step {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+    }
+
+    .p-step-highlight {
+      border-color: var(--old-rose);
+      background-color: #fff9fa;
+    }
+
+    .p-arrow {
+      text-align: center;
+      font-size: 11px;
+      color: var(--rosy-taupe);
+      margin: -2px 0;
+    }
+
+    /* Diagnostic Tabs inside Slideover */
+    .diag-tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
+    }
+
+    .diag-tab {
+      background: none;
+      border: none;
+      font-family: var(--font-stack);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dim-grey);
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .diag-tab.active {
+      color: var(--deep-blue);
+      background-color: var(--bg-paper-tint);
+      font-weight: 600;
+    }
+
+    .diag-content {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .diag-content.active {
+      display: flex;
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-subtle);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--bg-paper-tint);
+      color: var(--deep-blue);
+      font-weight: 600;
+    }
+
+    tr.fail {
+      background-color: #FFF1F2;
+      color: #9F1239;
+    }
+
+    pre {
+      background-color: var(--bg-page);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      overflow-x: auto;
+      color: var(--deep-blue);
+      line-height: 1.45;
+    }
+
+    /* ==========================================================================
+       RESPONSIVE DESIGN (Desktop 1440, Tablet 768, Mobile 375)
+       ========================================================================== */
+    @media (max-width: 768px) {
+      body {
+        padding: 0 16px 36px;
+      }
+
+      .app-top {
+        padding: 24px 0 16px;
+      }
+
+      .paper-canvas {
+        padding: 28px 24px;
+        min-height: 300px;
+      }
+
+      textarea#sentenceInput,
+      #sentenceDisplay {
+        font-size: 18px;
+        min-height: 240px;
+      }
+
+      .paper-bottom-bar {
+        padding: 14px 24px 20px;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .bottom-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0 12px 24px;
+      }
+
+      .app-top {
+        padding: 20px 0 14px;
+      }
+
+      .paper-canvas {
+        padding: 20px 16px;
+        min-height: 240px;
+      }
+
+      textarea#sentenceInput,
+      #sentenceDisplay {
+        font-size: 18px;
+      }
+
+      .empty-prompt-hint {
+        left: 16px;
+        top: 60px;
+      }
+
+      #suggestionBox {
+        width: calc(100% - 24px);
+        left: 12px !important;
+      }
+
+      .bottom-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .btn-copy, .btn-check-compact {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Application Bar -->
+  <header class="app-top">
+    <div class="brand-wrap">
+      <div class="brand-title">
+        <span>SMARTSPELL</span>
+        <span class="brand-dot"></span>
+      </div>
+      <div class="brand-subline">Paste text. Fix typos. Done.</div>
+    </div>
+
+    <button id="howItWorksBtn" class="how-link" type="button">How it works</button>
+  </header>
+
+  <!-- Centered Writing Sheet (The Visual Centerpiece) -->
+  <main class="sheet-wrapper">
+    <div class="writing-paper" id="writingSheet">
+      
+      <!-- Writing Surface -->
+      <div class="paper-canvas" id="editorSurface">
+        
+        <!-- Editable Textarea (#sentenceInput) -->
+        <textarea 
+          id="sentenceInput" 
+          placeholder="Start writing..." 
+          spellcheck="false" 
+          autocomplete="off" 
+          autocorrect="off" 
+          autocapitalize="off"></textarea>
+        
+        <!-- Subtle empty state invitation -->
+        <div class="empty-prompt-hint" id="emptyHint">Type or paste text here</div>
+
+        <!-- Rendered Display Surface (#sentenceDisplay) -->
+        <div id="sentenceDisplay" style="display: none;"></div>
+
+        <!-- Contextual Correction Popover (#suggestionBox) -->
+        <div id="suggestionBox" style="display: none;"></div>
+
+      </div>
+
+      <!-- Quiet Bottom Status & Actions -->
+      <div class="paper-bottom-bar">
+        <div class="status-msg" id="statusText">Ready to check</div>
+
+        <div class="bottom-actions">
+          <button id="copyButton" type="button" class="btn-copy">
+            <span id="copyBtnText">Copy corrected text</span>
+          </button>
+          <button id="checkSentenceButton" type="button" class="btn-check-compact">
+            <span>Check text</span>
+          </button>
+          <button id="clearSentenceButton" type="button" class="btn-clear-compact">
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quiet Sample Prompts Below Paper -->
+    <div class="sample-prompts">
+      <span>Sample:</span>
+      <button type="button" class="sample-btn" id="ex1Button">"I recieve the mesage yuo sent."</button>
+      <span>&bull;</span>
+      <button type="button" class="sample-btn" id="ex2Button">"i have a meting tommorow"</button>
+    </div>
+  </main>
+
+  <!-- How It Works Slideover (Technical DAA Pipeline + Diagnostics) -->
+  <div class="overlay-backdrop" id="howItWorksBackdrop">
+    <aside class="slideover" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+      <div class="slideover-header">
+        <div>
+          <h2 class="slideover-title" id="howTitle">How SmartSpell Works</h2>
+          <p class="slideover-subtitle">Damerau-Levenshtein &amp; Multi-Factor Ranking</p>
+        </div>
+        <button type="button" class="slideover-close" id="closeHowItWorksBtn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="slideover-body">
+        
+        <!-- Algorithmic Pipeline Diagram -->
+        <div class="pipeline-diagram">
+          <div class="p-step">
+            <div><strong>1. Input Token</strong></div>
+            <div style="font-family: var(--font-mono); color: var(--dim-grey);">recieve</div>
+          </div>
+          <div class="p-arrow">&darr;</div>
+          <div class="p-step">
+            <div><strong>2. Candidate Generation</strong> (Length &plusmn;2 clustering)</div>
+            <div style="font-family: var(--font-mono); color: var(--dim-grey);">O(1) bucket</div>
+          </div>
+          <div class="p-arrow">&darr;</div>
+          <div class="p-step">
+            <div><strong>3. Damerau-Levenshtein Distance</strong> (Transpositions)</div>
+            <div style="font-family: var(--font-mono); color: var(--dim-grey);">dist = 1</div>
+          </div>
+          <div class="p-arrow">&darr;</div>
+          <div class="p-step">
+            <div><strong>4. Multi-Factor Ranking</strong> (Dist + Sim + Freq)</div>
+            <div style="font-family: var(--font-mono); color: var(--dim-grey);">top score</div>
+          </div>
+          <div class="p-arrow">&darr;</div>
+          <div class="p-step p-step-highlight">
+            <div><strong style="color: var(--deep-blue);">5. Best Correction</strong></div>
+            <div style="font-family: var(--font-mono); color: var(--deep-blue); font-weight: 600;">receive</div>
+          </div>
+        </div>
+
+        <!-- Diagnostic Tabs -->
+        <div class="diag-tabs">
+          <button type="button" class="diag-tab active" id="tabSuite">Test Suite (46 tests)</button>
+          <button type="button" class="diag-tab" id="tabSingle">Single Word</button>
+          <button type="button" class="diag-tab" id="tabJson">Raw JSON</button>
+        </div>
+
+        <!-- Pane 1: Automated Tests -->
+        <div class="diag-content active" id="paneSuite">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12.5px; color: var(--dim-grey);">Automated test assertions:</span>
+            <button id="testButton" type="button" class="btn-check-compact" style="padding: 4px 10px; font-size: 12px;">Run tests</button>
+          </div>
+          <p id="testSummary" style="font-size: 12px; font-weight: 600; color: var(--deep-blue);"></p>
+          <div class="table-scroll">
+            <div id="testTable"></div>
+          </div>
+        </div>
+
+        <!-- Pane 2: Single Word Diagnostic -->
+        <div class="diag-content" id="paneSingle">
+          <form id="checkForm" style="display: flex; gap: 8px;">
+            <input id="wordInput" type="text" placeholder="e.g. recieve" style="flex:1; padding: 6px 10px; font-size: 13px; border: 1px solid var(--border-subtle); border-radius: 6px;">
+            <button type="submit" class="btn-copy">Inspect</button>
+          </form>
+          <pre id="output">Type a word above and press Inspect.</pre>
+          <pre id="raw">{}</pre>
+        </div>
+
+        <!-- Pane 3: Raw JSON Output -->
+        <div class="diag-content" id="paneJson">
+          <pre id="sentenceRaw">Sentence metadata will appear here when text is analyzed.</pre>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- Protected Engine Scripts (Do Not Modify) -->
+  <script src="dictionary.js"></script>
+  <script src="engine.js"></script>
+  <script src="tests.js"></script>
+
+  <!-- Application Controller -->
+  <script>
+    function escapeHtml(str) {
+      if (typeof str !== "string") return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function describe(r) {
+      if (r.status === "empty") return "Nothing to check.";
+      if (r.status === "skipped") return "Skipped (" + r.reason + ").";
+      if (r.status === "known") return "Already recognized: " + r.word;
+      if (r.status === "no_match") return "No close match found. Candidates checked: " + r.candidatesChecked;
+      let text = "Did you mean " + r.suggestions[0].word + "?\n";
+      text += "Candidates checked: " + r.candidatesChecked + "\n\n";
+      for (let i = 0; i < r.suggestions.length; i++) {
+        const s = r.suggestions[i];
+        text += (i + 1) + ". " + s.word + " (dist " + s.distance + ", sim " + s.similarity + "%)\n";
+      }
+      return text;
+    }
+
+    // State Variables
+    let currentSentenceData = null;
+    let selectedTokenIndex = null;
+    let isReviewMode = false;
+    let autoCheckTimer = null;
+
+    // DOM References
+    const sentenceInput = document.getElementById("sentenceInput");
+    const sentenceDisplay = document.getElementById("sentenceDisplay");
+    const suggestionBox = document.getElementById("suggestionBox");
+    const sentenceRaw = document.getElementById("sentenceRaw");
+    const emptyHint = document.getElementById("emptyHint");
+    const statusText = document.getElementById("statusText");
+    const copyButton = document.getElementById("copyButton");
+    const copyBtnText = document.getElementById("copyBtnText");
+
+    // Track empty hint
+    function updateEmptyHint() {
+      const text = sentenceInput.value;
+      emptyHint.style.display = (text.length === 0) ? "block" : "none";
+    }
+
+    // Input listeners: auto-check with gentle debounce
+    sentenceInput.addEventListener("input", function() {
+      updateEmptyHint();
+      clearTimeout(autoCheckTimer);
+      if (isReviewMode) {
+        switchToEditMode();
+      }
+      if (sentenceInput.value.trim().length > 0) {
+        autoCheckTimer = setTimeout(checkCurrentSentence, 750);
+      } else {
+        updateStatus(null);
+      }
+    });
+
+    // When focus leaves the writing area, cancel pending auto-check to prevent premature processing
+    sentenceInput.addEventListener("blur", function() {
+      clearTimeout(autoCheckTimer);
+    });
+
+    sentenceInput.addEventListener("paste", function() {
+      setTimeout(function() {
+        updateEmptyHint();
+        checkCurrentSentence();
+      }, 50);
+    });
+
+    sentenceInput.addEventListener("keydown", function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        checkCurrentSentence();
+      }
+    });
+
+    // Mode Transitions
+    function switchToEditMode() {
+      isReviewMode = false;
+      sentenceDisplay.style.display = "none";
+      sentenceInput.style.display = "block";
+      suggestionBox.style.display = "none";
+      sentenceInput.focus();
+    }
+
+    function switchToReviewMode() {
+      isReviewMode = true;
+      sentenceInput.style.display = "none";
+      sentenceDisplay.style.display = "block";
+    }
+
+    // Clicking anywhere on the canvas (outside of an underlined typo) returns immediately to edit mode
+    sentenceDisplay.addEventListener("click", function(e) {
+      if (!e.target.classList.contains("corrected-word")) {
+        switchToEditMode();
+      }
+    });
+    sentenceDisplay.addEventListener("dblclick", switchToEditMode);
+
+    // Get traceback explanation
+    function getTracebackExplanation(details) {
+      if (!details || !details.operations) return "Spelling suggestion";
+      const ops = details.operations;
+      if (ops.transpositions > 0) return "Swapped two letters";
+      if (ops.insertions > 0 && !ops.deletions && !ops.substitutions) return "One letter missing";
+      if (ops.deletions > 0 && !ops.insertions && !ops.substitutions) return "Extra letter";
+      if (ops.substitutions > 0 && !ops.insertions && !ops.deletions) return "Character changed";
+      return "Spelling correction";
+    }
+
+    // Update Status Area
+    function updateStatus(unresolvedCount) {
+      if (unresolvedCount === null || unresolvedCount === undefined) {
+        statusText.className = "status-msg";
+        statusText.textContent = "Ready to check";
+      } else if (unresolvedCount === 0) {
+        statusText.className = "status-msg is-clean";
+        statusText.innerHTML = "&check; All clear";
+      } else {
+        statusText.className = "status-msg";
+        statusText.textContent = unresolvedCount + " " + (unresolvedCount === 1 ? "spelling mistake" : "spelling mistakes");
+      }
+    }
+
+    function getUnresolvedCount() {
+      if (!currentSentenceData || !currentSentenceData.tokens) return 0;
+      return currentSentenceData.tokens.filter(function(t) {
+        return t.isWord && t.hasTypo && !t.resolved;
+      }).length;
+    }
+
+    // Render Review Surface
+    function renderSentenceDisplay() {
+      if (!currentSentenceData || !currentSentenceData.tokens) return;
+
+      let html = "";
+      for (let i = 0; i < currentSentenceData.tokens.length; i++) {
+        const t = currentSentenceData.tokens[i];
+        if (t.isWord && t.hasTypo && !t.resolved) {
+          const isSelected = (selectedTokenIndex === i);
+          html += '<span class="corrected-word' + (isSelected ? ' selected' : '') +
+                  '" data-idx="' + i + '">' +
+                  escapeHtml(t.currentWord || t.originalWord) + '</span>';
+        } else {
+          const wordText = t.currentWord || t.text;
+          if (t.justAccepted) {
+            html += '<span class="word-resolved-flash">' + escapeHtml(wordText) + '</span>';
+            t.justAccepted = false;
+          } else {
+            html += escapeHtml(wordText);
+          }
+        }
+      }
+
+      sentenceDisplay.innerHTML = html;
+      updateStatus(getUnresolvedCount());
+
+      // Update developer raw JSON
+      sentenceRaw.textContent = JSON.stringify({
+        original: currentSentenceData.original,
+        currentText: currentSentenceData.tokens.map(function(tok) { return tok.currentWord || tok.text; }).join(""),
+        unresolvedCount: getUnresolvedCount(),
+        tokens: currentSentenceData.tokens
+      }, null, 2);
+
+      // Attach click events to clickable typo spans
+      const spans = sentenceDisplay.querySelectorAll(".corrected-word");
+      spans.forEach(function(span) {
+        span.onclick = function(e) {
+          e.stopPropagation();
+          const idx = parseInt(span.getAttribute("data-idx"), 10);
+          showSuggestionsForToken(idx, span);
+        };
+      });
+    }
+
+    // Anchored Contextual Suggestion Popover
+    function showSuggestionsForToken(tokenIdx, anchorElement) {
+      selectedTokenIndex = tokenIdx;
+      renderSentenceDisplay();
+
+      const t = currentSentenceData.tokens[tokenIdx];
+      if (!t || !t.details) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      const activeSpan = sentenceDisplay.querySelector('.corrected-word[data-idx="' + tokenIdx + '"]') || anchorElement;
+      const suggestions = t.details.allSuggestions || [];
+      const explanation = getTracebackExplanation(t.details);
+      const original = t.originalWord;
+
+      let popHtml = '<div class="pop-typo-header">' + escapeHtml(original) + '</div>';
+      popHtml += '<div class="pop-list">';
+
+      for (let s = 0; s < suggestions.length; s++) {
+        const sug = suggestions[s];
+        const isBest = (s === 0);
+        popHtml += '<button type="button" class="chip' + (isBest ? ' chip-best' : '') + '" data-word="' + escapeHtml(sug.word) + '">' +
+                   '<span>' + escapeHtml(sug.word) + '</span>' +
+                   (isBest ? '<span class="chip-check">&check;</span>' : '') +
+                   '</button>';
+      }
+      popHtml += '</div>';
+
+      popHtml += '<div class="pop-explanation">' + escapeHtml(explanation) + '</div>';
+      popHtml += '<button type="button" class="chip-revert" data-word="' + escapeHtml(original) + '">Keep original</button>';
+
+      suggestionBox.innerHTML = popHtml;
+
+      // Position anchored directly under clicked word
+      if (activeSpan) {
+        const canvasRect = document.getElementById("editorSurface").getBoundingClientRect();
+        const wordRect = activeSpan.getBoundingClientRect();
+        
+        let top = wordRect.bottom - canvasRect.top + 6;
+        let left = wordRect.left - canvasRect.left;
+
+        if (wordRect.width === 0 || isNaN(top)) {
+          top = 65;
+          left = 32;
+        }
+
+        if (left + 230 > canvasRect.width) {
+          left = Math.max(8, canvasRect.width - 236);
+        }
+
+        suggestionBox.style.top = Math.max(6, top) + "px";
+        suggestionBox.style.left = Math.max(6, left) + "px";
+      }
+
+      suggestionBox.style.display = "block";
+
+      // Bind clicks
+      const chips = suggestionBox.querySelectorAll(".chip, .chip-revert");
+      chips.forEach(function(chip) {
+        chip.onclick = function(e) {
+          e.stopPropagation();
+          const word = chip.getAttribute("data-word");
+          const isRevert = chip.classList.contains("chip-revert");
+          applySuggestionToToken(tokenIdx, word, isRevert);
+        };
+      });
+    }
+
+    // Apply Suggestion
+    function applySuggestionToToken(tokenIdx, chosenWord, isRevert) {
+      const t = currentSentenceData.tokens[tokenIdx];
+      t.currentWord = chosenWord;
+      t.text = chosenWord;
+      t.resolved = true;
+      t.justAccepted = !isRevert;
+      selectedTokenIndex = null;
+      suggestionBox.style.display = "none";
+
+      const updatedText = currentSentenceData.tokens.map(function(tok) { return tok.currentWord || tok.text; }).join("");
+      sentenceInput.value = updatedText;
+
+      renderSentenceDisplay();
+    }
+
+    // Close popover on document click
+    document.addEventListener("click", function(e) {
+      if (suggestionBox.style.display !== "none" && !suggestionBox.contains(e.target) && !e.target.classList.contains("corrected-word")) {
+        suggestionBox.style.display = "none";
+        selectedTokenIndex = null;
+        renderSentenceDisplay();
+      }
+    });
+
+    // Core Check
+    function checkCurrentSentence() {
+      const text = sentenceInput.value;
+      if (!text || text.trim() === "") {
+        currentSentenceData = null;
+        selectedTokenIndex = null;
+        suggestionBox.style.display = "none";
+        updateStatus(null);
+        switchToEditMode();
+        return;
+      }
+
+      const result = spellCheckSentence(text);
+      for (let i = 0; i < result.tokens.length; i++) {
+        const tok = result.tokens[i];
+        if (tok.isWord && tok.corrected) {
+          tok.hasTypo = true;
+          tok.resolved = false;
+          tok.currentWord = tok.originalWord;
+        } else {
+          tok.hasTypo = false;
+          tok.resolved = true;
+          tok.currentWord = tok.text;
+        }
+      }
+
+      currentSentenceData = result;
+      selectedTokenIndex = null;
+      suggestionBox.style.display = "none";
+
+      renderSentenceDisplay();
+      switchToReviewMode();
+    }
+
+    document.getElementById("checkSentenceButton").onclick = checkCurrentSentence;
+
+    // Clear Action
+    document.getElementById("clearSentenceButton").onclick = function() {
+      sentenceInput.value = "";
+      currentSentenceData = null;
+      selectedTokenIndex = null;
+      updateEmptyHint();
+      suggestionBox.style.display = "none";
+      sentenceRaw.textContent = "Sentence metadata will appear here when text is analyzed.";
+      updateStatus(null);
+      switchToEditMode();
+    };
+
+    // Copy Action
+    copyButton.onclick = function() {
+      const textToCopy = sentenceInput.value;
+      if (!textToCopy) return;
+
+      navigator.clipboard.writeText(textToCopy).then(function() {
+        copyBtnText.textContent = "✓ Copied";
+        setTimeout(function() {
+          copyBtnText.textContent = "Copy corrected text";
+        }, 1500);
+      }).catch(function() {
+        sentenceInput.select();
+        document.execCommand("copy");
+        copyBtnText.textContent = "✓ Copied";
+        setTimeout(function() {
+          copyBtnText.textContent = "Copy corrected text";
+        }, 1500);
+      });
+    };
+
+    // Sample Sentence Helpers
+    function loadSentence(text) {
+      sentenceInput.value = text;
+      updateEmptyHint();
+      checkCurrentSentence();
+    }
+
+    document.getElementById("ex1Button").onclick = function() {
+      loadSentence("I recieve the mesage yuo sent.");
+    };
+
+    document.getElementById("ex2Button").onclick = function() {
+      loadSentence("i have a meting tommorow");
+    };
+
+    // How It Works Overlay Handlers
+    const howItWorksBtn = document.getElementById("howItWorksBtn");
+    const howItWorksBackdrop = document.getElementById("howItWorksBackdrop");
+    const closeHowItWorksBtn = document.getElementById("closeHowItWorksBtn");
+
+    function openHow() { howItWorksBackdrop.classList.add("active"); }
+    function closeHow() { howItWorksBackdrop.classList.remove("active"); }
+
+    howItWorksBtn.onclick = openHow;
+    closeHowItWorksBtn.onclick = closeHow;
+
+    howItWorksBackdrop.onclick = function(e) {
+      if (e.target === howItWorksBackdrop) closeHow();
+    };
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        closeHow();
+        if (suggestionBox.style.display !== "none") {
+          suggestionBox.style.display = "none";
+          selectedTokenIndex = null;
+          renderSentenceDisplay();
+        }
+      }
+    });
+
+    // Diagnostic Tabs inside Slideover
+    const tabSuite = document.getElementById("tabSuite");
+    const tabSingle = document.getElementById("tabSingle");
+    const tabJson = document.getElementById("tabJson");
+    const paneSuite = document.getElementById("paneSuite");
+    const paneSingle = document.getElementById("paneSingle");
+    const paneJson = document.getElementById("paneJson");
+
+    function setDiag(tab, pane) {
+      [tabSuite, tabSingle, tabJson].forEach(t => t.classList.remove("active"));
+      [paneSuite, paneSingle, paneJson].forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      pane.classList.add("active");
+    }
+
+    tabSuite.onclick = () => setDiag(tabSuite, paneSuite);
+    tabSingle.onclick = () => setDiag(tabSingle, paneSingle);
+    tabJson.onclick = () => setDiag(tabJson, paneJson);
+
+    // Single Word Diagnostic Form Submit
+    document.getElementById("checkForm").onsubmit = function(e) {
+      e.preventDefault();
+      const r = spellCheck(document.getElementById("wordInput").value);
+      document.getElementById("output").textContent = describe(r);
+      document.getElementById("raw").textContent = JSON.stringify(r, null, 2);
+    };
+
+    // Automated Test Suite Runner Button
+    document.getElementById("testButton").onclick = function() {
+      const t = runTests();
+      document.getElementById("testSummary").textContent =
+        "Typos: top-1 " + t.top1 + "/" + t.typoTotal + ", top-3 " + t.top3 + "/" + t.typoTotal +
+        ". Known/skip/no-match cases passed: " + t.otherPass + "/" + t.otherTotal +
+        ". Sentences passed: " + t.sentencePass + "/" + t.sentenceTotal + ".";
+      let html = "<table><tr><th>Typed</th><th>Expected</th><th>Type</th><th>Got</th><th>Pass</th></tr>";
+      for (let i = 0; i < t.rows.length; i++) {
+        const row = t.rows[i];
+        const note = row.pass ? (row.top1 ? "top-1" : "ok") : "FAIL";
+        html += "<tr" + (row.pass ? "" : " class='fail'") + "><td>" + row.typed + "</td><td>" +
+                row.expected + "</td><td>" + row.type + "</td><td>" + row.got + "</td><td>" + note + "</td></tr>";
+      }
+      document.getElementById("testTable").innerHTML = html + "</table>";
+    };
+
+    updateEmptyHint();
+
+    // Query parameter helper for visual test verification
+    const urlParams = new URLSearchParams(window.location.search);
+    const testState = urlParams.get("state");
+    if (testState === "ex1") {
+      loadSentence("I recieve the mesage yuo sent.");
+    } else if (testState === "popover") {
+      loadSentence("I recieve the mesage yuo sent.");
+      const firstWord = document.querySelector(".corrected-word");
+      if (firstWord) {
+        const idx = parseInt(firstWord.getAttribute("data-idx"), 10);
+        showSuggestionsForToken(idx, firstWord);
+      }
+    } else if (testState === "all_clear") {
+      loadSentence("I recieve the mesage yuo sent.");
+      if (currentSentenceData && currentSentenceData.tokens) {
+        currentSentenceData.tokens.forEach(function(tok, i) {
+          if (tok.hasTypo && tok.details && tok.details.allSuggestions && tok.details.allSuggestions.length > 0) {
+            applySuggestionToToken(i, tok.details.allSuggestions[0].word, false);
+          }
+        });
+      }
+    } else if (testState === "ex2") {
+      loadSentence("i have a meting tommorow");
+    } else if (testState === "how_it_works") {
+      openHow();
+      document.getElementById("testButton").click();
+    }
+  </script>
+</body>
+</html>
