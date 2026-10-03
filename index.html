@@ -999,16 +999,31 @@
     }
 
     // Update Status Area
-    function updateStatus(unresolvedCount) {
+    function updateStatus(unresolvedCount, unrecognizedCount) {
       if (unresolvedCount === null || unresolvedCount === undefined) {
         statusText.className = "status-msg";
         statusText.textContent = "Ready to check";
-      } else if (unresolvedCount === 0) {
+        return;
+      }
+
+      if (unrecognizedCount === undefined) {
+        unrecognizedCount = getUnrecognizedCount();
+      }
+
+      if (unresolvedCount === 0 && unrecognizedCount === 0) {
         statusText.className = "status-msg is-clean";
         statusText.innerHTML = "&check; All clear";
-      } else {
+      } else if (unresolvedCount > 0 && unrecognizedCount === 0) {
         statusText.className = "status-msg";
         statusText.textContent = unresolvedCount + " " + (unresolvedCount === 1 ? "spelling mistake" : "spelling mistakes");
+      } else if (unresolvedCount === 0 && unrecognizedCount > 0) {
+        statusText.className = "status-msg";
+        statusText.textContent = unrecognizedCount + " " + (unrecognizedCount === 1 ? "word not recognized" : "words not recognized");
+      } else {
+        statusText.className = "status-msg";
+        const mistakeStr = unresolvedCount + " " + (unresolvedCount === 1 ? "spelling mistake" : "spelling mistakes");
+        const unrecStr = unrecognizedCount + " " + (unrecognizedCount === 1 ? "word not recognized" : "words not recognized");
+        statusText.textContent = mistakeStr + ", " + unrecStr;
       }
     }
 
@@ -1016,6 +1031,13 @@
       if (!currentSentenceData || !currentSentenceData.tokens) return 0;
       return currentSentenceData.tokens.filter(function(t) {
         return t.isWord && t.hasTypo && !t.resolved;
+      }).length;
+    }
+
+    function getUnrecognizedCount() {
+      if (!currentSentenceData || !currentSentenceData.tokens) return 0;
+      return currentSentenceData.tokens.filter(function(t) {
+        return t.isWord && t.status === "no_match";
       }).length;
     }
 
@@ -1043,7 +1065,7 @@
       }
 
       sentenceDisplay.innerHTML = html;
-      updateStatus(getUnresolvedCount());
+      updateStatus(getUnresolvedCount(), getUnrecognizedCount());
 
       // Update developer raw JSON
       sentenceRaw.textContent = JSON.stringify({
@@ -1051,6 +1073,7 @@
         corrected: currentSentenceData.corrected,
         currentText: currentSentenceData.tokens.map(function(tok) { return tok.currentWord || tok.text; }).join(""),
         unresolvedCount: getUnresolvedCount(),
+        unrecognizedCount: getUnrecognizedCount(),
         tokens: currentSentenceData.tokens
       }, null, 2);
 
